@@ -13,6 +13,28 @@ function getTableRowData(tr) {
     };
 }
 
+const abbreviations = {
+    "at": "an toan",
+    "bh": "bao ho",
+    "qa": "quan ao",
+    "ao gi" : "ao gile"
+    // Thêm các cặp viết tắt và từ đầy đủ khác vào đây
+};
+
+// Function để kiểm tra itemCode có tồn tại trong mảng các giá trị không hợp lệ
+function isItemCodeValid(itemCode) {
+    // Mảng các giá trị không hợp lệ
+    let invalidValues = [
+        "không được để trống",
+        "Không tìm thấy",
+        "không có trong danh mục"
+        // Thêm các giá trị không hợp lệ khác vào đây nếu cần
+    ];
+
+    // Kiểm tra xem itemCode có chứa bất kỳ giá trị không hợp lệ nào không
+    return !invalidValues.some(value => itemCode.includes(value));
+}
+
 // Function kiểm tra và sửa chi tiết
 function checkAndFixDetail(index = 0, maxIterations = 20) {
     var trs = document.evaluate(
@@ -26,7 +48,7 @@ function checkAndFixDetail(index = 0, maxIterations = 20) {
         console.log("Đã kiểm tra xong hoặc đạt đến số lần lặp tối đa.");
         return;
     } else {
-        console.log("Thực hiện tại hàng: " + index);
+        console.log("Thực hiện tại hàng: " + (index + 1));
     }
 
     var tr = trs.snapshotItem(index);
@@ -34,9 +56,9 @@ function checkAndFixDetail(index = 0, maxIterations = 20) {
     var { itemCode, itemName, unitPrice, tds } = rowData;
 
     // In ra giá trị của các thẻ <td>
-    console.log("Giá trị của Mã hàng: " + itemCode);
-    console.log("Giá trị của Tên hàng: " + itemName);
-    console.log("Giá trị của Đơn giá: " + unitPrice);
+    // console.log("Giá trị của Mã hàng: " + itemCode);
+    // console.log("Giá trị của Tên hàng: " + itemName);
+    // console.log("Giá trị của Đơn giá: " + unitPrice);
 
     if (!itemCode || !isItemCodeValid(itemCode)) {
         alert("[Mã hàng] tại hàng " + (index + 1) + " không hợp lệ");
@@ -136,14 +158,6 @@ function areWordsContained(string1, string2) {
     return isSubset1 || isSubset2;
 }
 
-const abbreviations = {
-    "at": "an toan",
-    "bh": "bao ho",
-    "qa": "quan ao",
-    "ao gi" : "ao gile"
-    // Thêm các cặp viết tắt và từ đầy đủ khác vào đây
-};
-
 function expandAbbreviations(inputString, abbreviations) {
     // Tạo một bản sao của chuỗi đầu vào để thực hiện thay thế
     let resultString = inputString;
@@ -157,20 +171,6 @@ function expandAbbreviations(inputString, abbreviations) {
     }
 
     return resultString;
-}
-
-// Function để kiểm tra itemCode có tồn tại trong mảng các giá trị không hợp lệ
-function isItemCodeValid(itemCode) {
-    // Mảng các giá trị không hợp lệ
-    let invalidValues = [
-        "không được để trống",
-        "Không tìm thấy",
-        "không có trong danh mục"
-        // Thêm các giá trị không hợp lệ khác vào đây nếu cần
-    ];
-
-    // Kiểm tra xem itemCode có chứa bất kỳ giá trị không hợp lệ nào không
-    return !invalidValues.some(value => itemCode.includes(value));
 }
 
 // Function chuyển đổi đơn vị tiền tệ
