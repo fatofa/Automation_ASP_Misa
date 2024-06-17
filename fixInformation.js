@@ -3,21 +3,29 @@ function getTableRowData(tr) {
     var tds = tr.getElementsByTagName('td');
     var indexItemCode = 2;
     var indexItemName = 3;
+    var indexValueDVT = 7;
     var indexUnitPrice = 9;
 
     return {
         itemCode: tds[indexItemCode].textContent,
         itemName: tds[indexItemName].textContent,
         unitPrice: tds[indexUnitPrice].textContent,
+        valueDVT: tds[indexValueDVT].textContent,
         tds: tds
     };
 }
 
+// Ký tự viết tắt
 const abbreviations = {
     "at": "an toan",
     "bh": "bao ho",
     "qa": "quan ao",
-    "ao gi" : "ao gile"
+    "ao gi" : "ao gile",
+    "cn" : "cong nhan",
+    "bv" : "bao ve",
+    "bhld" : "bao ho lao dong",
+    "pq" : "phan quang",
+    "pccc" : "phong chay chua chay"
     // Thêm các cặp viết tắt và từ đầy đủ khác vào đây
 };
 
@@ -36,7 +44,7 @@ function isItemCodeValid(itemCode) {
 }
 
 // Function kiểm tra và sửa chi tiết
-function checkAndFixDetail(index = 0, maxIterations = 20) {
+function checkAndFixDetail(index = 0, maxIterations = 100) {
     var trs = document.evaluate(
         '//tr[contains(@class,"tr-values vs-table--tr tr-table-state-null select")]',
         document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null
@@ -53,12 +61,15 @@ function checkAndFixDetail(index = 0, maxIterations = 20) {
 
     var tr = trs.snapshotItem(index);
     var rowData = getTableRowData(tr);
-    var { itemCode, itemName, unitPrice, tds } = rowData;
+    var { itemCode, itemName, valueDVT, unitPrice, tds } = rowData;
 
     // In ra giá trị của các thẻ <td>
     // console.log("Giá trị của Mã hàng: " + itemCode);
     // console.log("Giá trị của Tên hàng: " + itemName);
+    // console.log("Giá trị của DVT: " + valueDVT);
     // console.log("Giá trị của Đơn giá: " + unitPrice);
+
+    // fixRowDVT(tds);
 
     if (!itemCode || !isItemCodeValid(itemCode)) {
         alert("[Mã hàng] tại hàng " + (index + 1) + " không hợp lệ");
@@ -76,6 +87,8 @@ function checkAndFixDetail(index = 0, maxIterations = 20) {
         }
     }
 }
+// Hàm chính để bắt đầu quá trình kiểm tra và sửa
+checkAndFixDetail();
 
 // Function sửa mã hàng nếu không khớp
 function fixItemCode(tds, itemCode, unitPrice, index, maxIterations) {
@@ -87,7 +100,9 @@ function fixItemCode(tds, itemCode, unitPrice, index, maxIterations) {
             itemCodeEle.click();
             var inputField = itemCodeEle.querySelector('input.combo-input');
             if (inputField) {
-                var valueOfItemCode = extractTextBeforeAmount(itemCode) + " " + convertCurrency(unitPrice);
+
+                var valueOfItemCode = extractTextBeforeAmount(itemCode) + " " + getCurrency(unitPrice);
+                // console.log("Enter value is: " + valueOfItemCode);
                 inputField.value = valueOfItemCode;
                 inputField.dispatchEvent(new Event('input'));
                 inputField.dispatchEvent(new Event('change'));
@@ -112,9 +127,6 @@ function fixItemCode(tds, itemCode, unitPrice, index, maxIterations) {
     }, 1000);
 }
 
-// Hàm chính để bắt đầu quá trình kiểm tra và sửa
-checkAndFixDetail();
-
 // Function để trích xuất phần văn bản trước số tiền
 function extractTextBeforeAmount(str) {
     var regex = /^(.+?)\s+\d+k$/;
@@ -130,6 +142,7 @@ function removeVietnameseAccents(str) {
 // Function kiểm tra 2 chuỗi
 function checkStrings(string1, string2, rowNumber) {
     if (areWordsContained(string1, string2)) {
+        console.log("Hai gía trị [Mã hàng] và [Tên hàng] trùng khớp.")
         return true;
     } else {
         alert("Hai giá trị [Mã hàng] và [Tên hàng] không khớp tại hàng số " + rowNumber);
@@ -138,6 +151,7 @@ function checkStrings(string1, string2, rowNumber) {
     }
 }
 
+// Function so sánh 2 từ bằng cách tách chuỗi
 function areWordsContained(string1, string2) {
     // Loại bỏ các từ viết tắt
     const resString1 = expandAbbreviations(string1, abbreviations);
@@ -146,6 +160,9 @@ function areWordsContained(string1, string2) {
     // Tách các chuỗi thành mảng từ
     const words1 = resString1.split(' ');
     const words2 = resString2.split(' ');
+
+    // console.log("Giá trị của string 1 là: " + words1);
+    // console.log("Giá trị của string 2 là: " + words2);
 
     // Tạo các tập hợp từ mảng từ
     const set1 = new Set(words1);
@@ -184,6 +201,22 @@ function convertCurrency(input) {
     });
 }
 
+// Function lấy giá trị tiền tệ - nếu có chuỗi
+function getCurrency(input) {
+    var res = convertCurrency(input);
+    if (res.includes("Đơn")) {
+        const regex = /\b\d+k\b/;
+        const match = res.match(regex);
+
+        if (match) {
+            res =  match[0];
+        } else {
+            console.log("No match found");
+        }
+    }
+    // console.log("[Đơn giá] convert to K is : " + res);
+    return res;
+}
 // Function kiểm tra mã hàng với tên hàng
 function verifyItemCodeWithItemName(itemCode, itemName, index) {
     var itemNameNoCode = extractTextBeforeAmount(itemCode);
@@ -210,4 +243,13 @@ function simulateTabKey(element) {
         shiftKey: false
     });
     element.dispatchEvent(keyboardEvent);
+}
+
+// Function sửa lỗi DVT
+function fixRowDVT(tds) {
+    var valueDVT = tds[7];
+    setTimeout(() => {
+        valueDVT.click();
+        console.log("Click done");
+    }, 1000);
 }
