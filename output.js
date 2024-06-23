@@ -44,7 +44,11 @@ function isItemCodeValid(itemCode) {
 }
 
 // Function kiểm tra và sửa chi tiết
-async function checkAndFixDetail(index = 0, maxIterations = 5) {
+async function checkAndFixDetail(index = 0, maxIterations = 1) {
+    const unpaidDiv = Array.from(document.querySelectorAll('.tooltip-content'))
+                            .find(div => div.innerText === 'Chưa thu tiền');
+        if (unpaidDiv) unpaidDiv.click();
+
     // Lấy tất cả các <tbody> trong <table> có class="ms-table"
     var table = document.evaluate(
         '//table[@class="ms-table"]//tbody',
